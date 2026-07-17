@@ -155,4 +155,29 @@ Payment	/payments/	GET
 ## 🛠️ Admin Dashboard (`admin_dashboard.html`)
 <img width="745" height="376" alt="image" src="https://github.com/user-attachments/assets/484e053f-22ee-4e59-a545-630dfd894710" />
 
+# 🗄️ MongoDB Atlas Screenshots
+
+## 🌐 MongoDB Atlas Dashboard
+*Shows the RideNova cluster and database connection.*
+
+![MongoDB Dashboard](mongodb_screenshots/dashboard.png)
+## 📂 Database
+**Database Name:** `RideNova_DB`
+<img width="959" height="493" alt="image" src="https://github.com/user-attachments/assets/e8c305ad-83a5-47e9-b7eb-16f72a246bfe" />
+
+## 👤 Customers Collection
+<img width="959" height="492" alt="image" src="https://github.com/user-attachments/assets/e16ab0ec-00f6-4d02-b8ec-488a0311f276" />
+
+## 🚖 Drivers Collection
+<img width="930" height="403" alt="image" src="https://github.com/user-attachments/assets/ca793dd1-d9ea-4e2f-b435-ed392a1a444f" />
+
+## 🚗 Vehicles Collection
+<img width="959" height="497" alt="image" src="https://github.com/user-attachments/assets/6f5ed776-58a0-4620-aec8-5c60ad794f5a" />
+
+## 📋 Bookings Collection
+<img width="959" height="500" alt="image" src="https://github.com/user-attachments/assets/c9a60383-7a37-45d6-b348-b3c30e16f29f" />
+
+## 💳 Payments Collection
+<img width="959" height="497" alt="image" src="https://github.com/user-attachments/assets/10b432ad-5e19-412a-8266-9a8d2fab9544" />
+
 The RideNova Taxi Booking Application was successfully developed using HTML, CSS, JavaScript, Django REST APIs, and MySQL. The project includes Customer, Driver, Vehicle, Booking, Payment, and Admin modules with complete CRUD operations. All APIs were tested successfully using Postman, and the frontend was verified through browser testing. The attached Postman API screenshots and frontend screenshots demonstrate the successful implementation, functionality, and user-friendly interface of the RideNova application.
