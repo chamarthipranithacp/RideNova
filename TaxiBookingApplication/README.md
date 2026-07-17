@@ -131,30 +131,46 @@ Payment	/payments/	GET
 <img width="957" height="476" alt="image" src="https://github.com/user-attachments/assets/c115093a-1fb2-49de-995b-94a601afac93" />
 
 
+
 👤 Register Page (register.html)
 <img width="491" height="420" alt="image" src="https://github.com/user-attachments/assets/2f6a2c42-339c-4393-83e6-63164e39eb13" />
+
 
 
 🔑 Login Page (login.html)
 <img width="698" height="427" alt="image" src="https://github.com/user-attachments/assets/45f57017-1633-49df-a701-d574a6dcd2f5" />
 
+
+
 🚖 Ride Booking Page (booking.html)
 <img width="674" height="434" alt="image" src="https://github.com/user-attachments/assets/506f1edb-78a9-480b-a829-b638d81842f4" />
+
+
 
 👨‍✈️ Driver Page (drivers.html)
 <img width="679" height="431" alt="image" src="https://github.com/user-attachments/assets/ede4ba71-d134-4f08-8322-ef0599069449" />
 
+
+
 💳 Payment Page (payments.html)
 <img width="298" height="349" alt="image" src="https://github.com/user-attachments/assets/2b64edb0-9bc3-4cd4-97f8-f081f187f1be" />
+
+
 
 📜 Ride History (ride_history.html)
 <img width="884" height="425" alt="image" src="https://github.com/user-attachments/assets/d99603c1-b8fa-4651-88e2-dd3febb45cdd" />
 
+
+
 📊 Customer Dashboard (customer_dashboard.html)
 <img width="957" height="434" alt="image" src="https://github.com/user-attachments/assets/b080f182-d6e0-4300-93dc-40cbff188f56" />
 
+
+
 🚕 Driver Dashboard (driver_dashboard.html)
 <img width="955" height="437" alt="image" src="https://github.com/user-attachments/assets/ee04754c-9301-47f1-984c-f3c00640497e" />
+
+
 
 🛠️ Admin Dashboard (admin_dashboard.html)
 <img width="745" height="376" alt="image" src="https://github.com/user-attachments/assets/484e053f-22ee-4e59-a545-630dfd894710" />
