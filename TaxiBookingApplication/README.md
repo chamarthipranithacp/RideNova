@@ -2,7 +2,6 @@
 
 This project is a premium, fully responsive **Taxi Booking Application** built with HTML5, CSS3, and ES6 JavaScript on the frontend, and a **Django REST API** server powered by **MongoDB Atlas** (using the `pymongo` driver) on the backend.
 
----
 
 ## 🛠️ Technology Stack
 
@@ -10,7 +9,6 @@ This project is a premium, fully responsive **Taxi Booking Application** built w
 * **Backend**: Django (Function-Based Views, CORS middleware wrappers)
 * **Database**: MongoDB Atlas (`pymongo` client wrapper with custom auto-increment IDs)
 
----
 
 ## 📂 Project Directory Structure
 
@@ -39,7 +37,6 @@ TaxiBookingApplication/
 └── README.md            # Project documentation
 ```
 
----
 
 ## 🔐 Credentials for Testing
 
@@ -51,7 +48,6 @@ To check the application locally, you can use these seeded credentials:
 | **Passenger (Customer)** | `rahul@gmail.com` | `rahul123` (Password) |
 | **Driver Partner** | `ramesh@gmail.com` | `9988776655` (Phone number as credential) |
 
----
 
 ## 🌐 API Endpoint Schema (20 REST Endpoints)
 
@@ -91,7 +87,6 @@ To check the application locally, you can use these seeded credentials:
 * **`PUT /admins/update/<id>/`**: Edit an admin
 * **`DELETE /admins/delete/<id>/`**: Remove an admin
 
----
 
 ## 🚀 How to Run the Application
 
