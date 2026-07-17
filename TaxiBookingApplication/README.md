@@ -130,8 +130,10 @@ Payment	/payments/	GET
 🏠 Home Page (index.html)
 <img width="957" height="476" alt="image" src="https://github.com/user-attachments/assets/c115093a-1fb2-49de-995b-94a601afac93" />
 
+
 👤 Register Page (register.html)
 <img width="491" height="420" alt="image" src="https://github.com/user-attachments/assets/2f6a2c42-339c-4393-83e6-63164e39eb13" />
+
 
 🔑 Login Page (login.html)
 <img width="698" height="427" alt="image" src="https://github.com/user-attachments/assets/45f57017-1633-49df-a701-d574a6dcd2f5" />
