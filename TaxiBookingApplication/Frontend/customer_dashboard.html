@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Dashboard - RideNova</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <div class="logo-container">
+                <svg class="moving-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1 .4-1 1v3H3c-.6 0-1 .4-1 1v2c0 .6.4 1 1 1h2"/>
+                    <circle cx="7" cy="17" r="2"/>
+                    <circle cx="17" cy="17" r="2"/>
+                </svg>
+                <a href="index.html" class="logo">Ride<span>Nova</span></a>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <!-- Dynamically populated by script.js -->
+            </ul>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2>Customer Dashboard</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Real-time stats and transactions list for your passenger account.</p>
+
+        <!-- Stats Grid -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-label">Total Rides Booked</div>
+                <div class="stat-val" id="total-rides-val">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Completed Rides</div>
+                <div class="stat-val" id="completed-rides-val" style="color: var(--success);">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Upcoming / Active</div>
+                <div class="stat-val" id="upcoming-rides-val" style="color: var(--accent);">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Spent</div>
+                <div class="stat-val" id="total-spent-val" style="color: var(--primary);">0</div>
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        <div class="card">
+            <h3>Payment Transaction History</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Receipt logs for processed ride transactions.</p>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Payment ID</th>
+                            <th>Booking ID</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Transaction ID</th>
+                            <th>Status</th>
+                            <th>Payment Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="payment-history-list">
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">Fetching transactions...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const user = getSessionUser();
+        if (!user || user.role !== 'customer') {
+            showNotification('Please log in as a customer to view dashboard.', 'error');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+
+        async function loadCustomerDashboard() {
+            if (!user) return;
+
+            try {
+                // Fetch bookings & payments
+                const bookings = await fetchAPI('/bookings/');
+                const payments = await fetchAPI('/payments/');
+
+                // Filter data
+                const myBookings = bookings.filter(b => b.customer_name.toLowerCase() === user.name.toLowerCase());
+                const myPayments = payments.filter(p => p.customer_name.toLowerCase() === user.name.toLowerCase() && p.payment_status === 'Success');
+
+                // Compute stats
+                const totalRides = myBookings.length;
+                const completedRides = myBookings.filter(b => b.ride_status === 'Completed').length;
+                const upcomingRides = myBookings.filter(b => b.ride_status === 'Requested' || b.ride_status === 'Accepted' || b.ride_status === 'In Progress').length;
+                
+                let totalSpent = 0;
+                myPayments.forEach(p => {
+                    totalSpent += parseFloat(p.amount);
+                });
+
+                // Set stat counters
+                document.getElementById('total-rides-val').textContent = totalRides;
+                document.getElementById('completed-rides-val').textContent = completedRides;
+                document.getElementById('upcoming-rides-val').textContent = upcomingRides;
+                document.getElementById('total-spent-val').textContent = `₹${totalSpent.toFixed(2)}`;
+
+                // Set payment list
+                const list = document.getElementById('payment-history-list');
+                if (myPayments.length === 0) {
+                    list.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="text-align: center; color: var(--text-muted);">No payments made yet.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                list.innerHTML = '';
+                myPayments.reverse().forEach(pay => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>#${pay.payment_id}</strong></td>
+                        <td>#${pay.booking_id}</td>
+                        <td><strong>₹${parseFloat(pay.amount).toFixed(2)}</strong></td>
+                        <td>${pay.payment_method}</td>
+                        <td><code>${pay.transaction_id}</code></td>
+                        <td><span class="badge badge-success">${pay.payment_status}</span></td>
+                        <td>${pay.payment_date}</td>
+                    `;
+                    list.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadCustomerDashboard);
+    </script>
+</body>
+</html>

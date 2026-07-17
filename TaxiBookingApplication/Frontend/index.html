@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RideNova - Premium Ride Booking</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <div class="logo-container">
+                <svg class="moving-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1 .4-1 1v3H3c-.6 0-1 .4-1 1v2c0 .6.4 1 1 1h2"/>
+                    <circle cx="7" cy="17" r="2"/>
+                    <circle cx="17" cy="17" r="2"/>
+                </svg>
+                <a href="index.html" class="logo">Ride<span>Nova</span></a>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <!-- Dynamically populated by script.js -->
+            </ul>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <h1>Your Premium Ride,<br>Just a Tap Away.</h1>
+        <p>Experience seamless and comfortable transportation with top-rated drivers and transparent, low-cost pricing. Safety and quality guaranteed.</p>
+        <div class="hero-cta">
+            <a href="booking.html" class="btn" style="width: auto;">Book a Ride Now</a>
+            <a href="register.html" class="btn btn-secondary" style="width: auto;">Drive with Us</a>
+        </div>
+    </section>
+
+    <!-- Quick Booking & Features -->
+    <main class="container">
+        <!-- Offers Section -->
+        <h2 style="text-align: center; margin-bottom: 2rem;">Exclusive Travel Offers</h2>
+        <div class="grid-3" style="margin-bottom: 4rem;">
+            <div class="card">
+                <span class="badge badge-warning" style="margin-bottom: 1rem;">Promo: TAXINEW</span>
+                <h3>First Ride Free</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">Register today and get 100% cashback up to ₹500 on your first booking.</p>
+                <a href="register.html" class="btn btn-secondary">Claim Offer</a>
+            </div>
+            <div class="card">
+                <span class="badge badge-success" style="margin-bottom: 1rem;">Weekend Special</span>
+                <h3>Flat 20% Off</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">Travel around the city on weekends and enjoy flat discounts on SUVs and Sedans.</p>
+                <a href="booking.html" class="btn btn-secondary">Book Ride</a>
+            </div>
+            <div class="card">
+                <span class="badge badge-info" style="margin-bottom: 1rem;">Corporate Ride</span>
+                <h3>Daily Commute Plan</h3>
+                <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 1.5rem;">Join corporate travel programs and save up to 30% on monthly office commutes.</p>
+                <a href="register.html" class="btn btn-secondary">Learn More</a>
+            </div>
+        </div>
+
+        <!-- Popular Destinations -->
+        <h2 style="text-align: center; margin-bottom: 2rem;">Popular Destinations (Tirupati)</h2>
+        <div class="grid-4" style="margin-bottom: 4rem;">
+            <div class="card" style="padding: 1rem;">
+                <div class="card-image-placeholder">Tirumala Temple</div>
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.25rem;">Tirumala Hill Temple</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Average fare: ₹300 - ₹500</p>
+            </div>
+            <div class="card" style="padding: 1rem;">
+                <div class="card-image-placeholder">Alipiri Gateway</div>
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.25rem;">Alipiri Footpath Gate</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Average fare: ₹100 - ₹150</p>
+            </div>
+            <div class="card" style="padding: 1rem;">
+                <div class="card-image-placeholder">Kapila Theertham</div>
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.25rem;">Kapila Theertham Temple</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Average fare: ₹80 - ₹120</p>
+            </div>
+            <div class="card" style="padding: 1rem;">
+                <div class="card-image-placeholder">Railway Station</div>
+                <h3 style="font-size: 1.1rem; margin-bottom: 0.25rem;">Tirupati Central Station</h3>
+                <p style="color: var(--text-muted); font-size: 0.85rem;">Average fare: ₹50 - ₹100</p>
+            </div>
+        </div>
+    </main>
+
+    <footer style="text-align: center; padding: 2rem; border-top: 1px solid var(--border-color); color: var(--text-muted); font-size: 0.9rem;">
+        &copy; 2026 GoTaxi Platforms Inc. All rights reserved.
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

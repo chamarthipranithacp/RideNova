@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Console - RideNova</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <div class="logo-container">
+                <svg class="moving-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1 .4-1 1v3H3c-.6 0-1 .4-1 1v2c0 .6.4 1 1 1h2"/>
+                    <circle cx="7" cy="17" r="2"/>
+                    <circle cx="17" cy="17" r="2"/>
+                </svg>
+                <a href="index.html" class="logo">Ride<span>Nova</span></a>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <!-- Dynamically populated by script.js -->
+            </ul>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2>Driver Console</h2>
+
+        <div class="grid-3" style="margin-bottom: 2rem;">
+            <!-- Driver Profile Card -->
+            <div class="card" id="driver-profile-card">
+                <h3>Driver Details</h3>
+                <div id="driver-details-content">
+                    <p style="color: var(--text-muted);">Loading details...</p>
+                </div>
+            </div>
+
+            <!-- Vehicle Info Card -->
+            <div class="card" id="driver-vehicle-card">
+                <h3>Vehicle Details</h3>
+                <div id="vehicle-details-content">
+                    <p style="color: var(--text-muted);">No vehicle associated yet.</p>
+                </div>
+            </div>
+
+            <!-- Status Control Card -->
+            <div class="card">
+                <h3>Availability Status</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1rem; font-size: 0.9rem;">Change your status to receive ride requests.</p>
+                <div class="form-group">
+                    <select class="form-control" id="driver-status" onchange="updateDriverStatus()">
+                        <option value="Available">Available</option>
+                        <option value="Busy">Busy</option>
+                        <option value="Offline">Offline</option>
+                    </select>
+                </div>
+                <div style="margin-top: 1rem; text-align: center;">
+                    <span id="status-indicator" class="badge badge-success">Available</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trips List -->
+        <div class="card">
+            <h3>Assigned Rides</h3>
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Manage status updates for passengers waiting or in transit.</p>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>From</th>
+                            <th>To</th>
+                            <th>Date</th>
+                            <th>Fare</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="driver-trips-list">
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-muted);">Fetching trips...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const user = getSessionUser();
+        if (!user || user.role !== 'driver') {
+            showNotification('Access denied. Please log in as a driver.', 'error');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+
+        let dbDriverRecord = null;
+
+        async function loadDriverConsole() {
+            if (!user) return;
+
+            try {
+                // Fetch driver details
+                const drivers = await fetchAPI('/drivers/');
+                dbDriverRecord = drivers.find(d => d.email.toLowerCase() === user.email.toLowerCase());
+                
+                if (!dbDriverRecord) {
+                    showNotification('Driver profile record not found!', 'error');
+                    return;
+                }
+
+                // Render Profile Details
+                const rating = Math.min(5.0, (4.2 + dbDriverRecord.experience * 0.15)).toFixed(1);
+                document.getElementById('driver-details-content').innerHTML = `
+                    <p style="margin-bottom: 0.5rem;"><strong>Name:</strong> ${dbDriverRecord.driver_name}</p>
+                    <p style="margin-bottom: 0.5rem;"><strong>Email:</strong> ${dbDriverRecord.email}</p>
+                    <p style="margin-bottom: 0.5rem;"><strong>Phone:</strong> ${dbDriverRecord.phone}</p>
+                    <p style="margin-bottom: 0.5rem;"><strong>License:</strong> ${dbDriverRecord.license_number}</p>
+                    <p style="margin-bottom: 0.5rem;"><strong>Experience:</strong> ${dbDriverRecord.experience} Years</p>
+                    <p><strong>Rating:</strong> ⭐ ${rating}</p>
+                `;
+
+                // Set Status dropdown
+                const statusDropdown = document.getElementById('driver-status');
+                statusDropdown.value = dbDriverRecord.availability;
+                updateStatusBadge(dbDriverRecord.availability);
+
+                // Fetch Vehicle details
+                const vehicles = await fetchAPI('/vehicles/');
+                const vehicle = vehicles.find(v => v.driver_name.toLowerCase() === dbDriverRecord.driver_name.toLowerCase());
+                if (vehicle) {
+                    document.getElementById('vehicle-details-content').innerHTML = `
+                        <p style="margin-bottom: 0.5rem;"><strong>Model:</strong> ${vehicle.model}</p>
+                        <p style="margin-bottom: 0.5rem;"><strong>Type:</strong> ${vehicle.vehicle_type}</p>
+                        <p style="margin-bottom: 0.5rem;"><strong>Plate Number:</strong> ${vehicle.vehicle_number}</p>
+                        <p><strong>Capacity:</strong> ${vehicle.seating_capacity} seats</p>
+                    `;
+                }
+
+                // Fetch and render assigned bookings
+                loadAssignedBookings();
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function updateStatusBadge(status) {
+            const indicator = document.getElementById('status-indicator');
+            indicator.textContent = status;
+            indicator.className = 'badge';
+            
+            if (status === 'Available') {
+                indicator.classList.add('badge-success');
+            } else if (status === 'Busy') {
+                indicator.classList.add('badge-warning');
+            } else {
+                indicator.classList.add('badge-danger');
+            }
+        }
+
+        async function updateDriverStatus() {
+            if (!dbDriverRecord) return;
+            const newStatus = document.getElementById('driver-status').value;
+            
+            const payload = {
+                driver_name: dbDriverRecord.driver_name,
+                email: dbDriverRecord.email,
+                phone: dbDriverRecord.phone,
+                license_number: dbDriverRecord.license_number,
+                experience: dbDriverRecord.experience,
+                availability: newStatus
+            };
+
+            try {
+                const res = await fetchAPI(`/drivers/update/${dbDriverRecord.driver_id}/`, 'PUT', payload);
+                if (res) {
+                    dbDriverRecord.availability = newStatus;
+                    updateStatusBadge(newStatus);
+                    showNotification('Status updated successfully!');
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function loadAssignedBookings() {
+            if (!dbDriverRecord) return;
+
+            try {
+                const bookings = await fetchAPI('/bookings/');
+                const driverTrips = bookings.filter(b => b.driver_name.toLowerCase() === dbDriverRecord.driver_name.toLowerCase());
+                
+                const list = document.getElementById('driver-trips-list');
+                if (driverTrips.length === 0) {
+                    list.innerHTML = `
+                        <tr>
+                            <td colspan="8" style="text-align: center; color: var(--text-muted);">No rides assigned.</td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                list.innerHTML = '';
+                driverTrips.reverse().forEach(trip => {
+                    let statusBadgeClass = 'badge-info';
+                    if (trip.ride_status === 'Completed') statusBadgeClass = 'badge-success';
+                    if (trip.ride_status === 'Cancelled') statusBadgeClass = 'badge-danger';
+                    if (trip.ride_status === 'Accepted' || trip.ride_status === 'In Progress') statusBadgeClass = 'badge-warning';
+
+                    // Actions rendering
+                    let actions = '-';
+                    if (trip.ride_status === 'Requested') {
+                        actions = `<button class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; width: auto;" onclick="updateTripStatus(${trip.booking_id}, 'Accepted')">Accept</button>`;
+                    } else if (trip.ride_status === 'Accepted') {
+                        actions = `<button class="btn" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; width: auto;" onclick="updateTripStatus(${trip.booking_id}, 'In Progress')">Start Trip</button>`;
+                    } else if (trip.ride_status === 'In Progress') {
+                        actions = `<button class="btn btn-success" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; width: auto;" onclick="updateTripStatus(${trip.booking_id}, 'Completed')">Complete</button>`;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>#${trip.booking_id}</strong></td>
+                        <td>${trip.customer_name}</td>
+                        <td>${trip.pickup_location}</td>
+                        <td>${trip.drop_location}</td>
+                        <td>${trip.booking_date}</td>
+                        <td>$${trip.fare}</td>
+                        <td><span class="badge ${statusBadgeClass}">${trip.ride_status}</span></td>
+                        <td>${actions}</td>
+                    `;
+                    list.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function updateTripStatus(bookingId, nextStatus) {
+            try {
+                // Fetch the full trip data to update it
+                const bookings = await fetchAPI('/bookings/');
+                const trip = bookings.find(b => b.booking_id === bookingId);
+                
+                if (!trip) {
+                    showNotification('Booking not found!', 'error');
+                    return;
+                }
+
+                const payload = {
+                    customer_name: trip.customer_name,
+                    driver_name: trip.driver_name,
+                    pickup_location: trip.pickup_location,
+                    drop_location: trip.drop_location,
+                    booking_date: trip.booking_date,
+                    fare: trip.fare,
+                    ride_status: nextStatus
+                };
+
+                const res = await fetchAPI(`/bookings/update/${bookingId}/`, 'PUT', payload);
+                if (res) {
+                    showNotification(`Ride status updated to ${nextStatus}!`);
+                    loadAssignedBookings();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadDriverConsole);
+    </script>
+</body>
+</html>

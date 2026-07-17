@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Driver Dashboard - RideNova</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <div class="logo-container">
+                <svg class="moving-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1 .4-1 1v3H3c-.6 0-1 .4-1 1v2c0 .6.4 1 1 1h2"/>
+                    <circle cx="7" cy="17" r="2"/>
+                    <circle cx="17" cy="17" r="2"/>
+                </svg>
+                <a href="index.html" class="logo">Ride<span>Nova</span></a>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <!-- Dynamically populated by script.js -->
+            </ul>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2>Driver Dashboard</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Overview of performance metrics, ratings, and total driver earnings.</p>
+
+        <!-- Stats Grid -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-label">Assigned Rides</div>
+                <div class="stat-val" id="assigned-rides-val">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Completed Trips</div>
+                <div class="stat-val" id="completed-trips-val" style="color: var(--success);">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Earnings</div>
+                <div class="stat-val" id="earnings-val" style="color: var(--accent);">₹0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Availability Status</div>
+                <div class="stat-val" style="margin-top: 1rem;"><span id="availability-badge" class="badge">Offline</span></div>
+            </div>
+        </div>
+
+        <!-- Revenue Breakdown Card -->
+        <div class="grid-2">
+            <div class="card">
+                <h3>Earnings Breakdown</h3>
+                <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Overview of individual fares collected from passenger trips.</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Customer Name</th>
+                                <th>Trip Date</th>
+                                <th>Fare Earned</th>
+                            </tr>
+                        </thead>
+                        <tbody id="earnings-list">
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--text-muted);">Fetching earnings details...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Driver Rating & Tips</h3>
+                <div style="text-align: center; padding: 2rem 0;">
+                    <div style="font-size: 4rem; color: var(--accent); line-height: 1;">⭐ 4.8</div>
+                    <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.95rem;">You are in the top 10% of drivers this week! Keep up the good work to maintain high ratings and receive bonus bookings.</p>
+                </div>
+                <hr style="border: 0; border-top: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+                <h4>Quick Tips for Drivers:</h4>
+                <ul style="color: var(--text-muted); font-size: 0.9rem; margin-top: 0.5rem; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <li>Keep your vehicle clean and smelling fresh.</li>
+                    <li>Always confirm the rider's destination address before starting.</li>
+                    <li>Toggle status to "Offline" when taking a break.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const user = getSessionUser();
+        if (!user || user.role !== 'driver') {
+            showNotification('Access denied. Please log in as a driver.', 'error');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+
+        async function loadDriverDashboard() {
+            if (!user) return;
+
+            try {
+                // Fetch drivers list to get current availability status
+                const drivers = await fetchAPI('/drivers/');
+                const dbDriver = drivers.find(d => d.email.toLowerCase() === user.email.toLowerCase());
+                
+                if (dbDriver) {
+                    const badge = document.getElementById('availability-badge');
+                    badge.textContent = dbDriver.availability;
+                    badge.className = 'badge';
+                    if (dbDriver.availability === 'Available') badge.classList.add('badge-success');
+                    else if (dbDriver.availability === 'Busy') badge.classList.add('badge-warning');
+                    else badge.classList.add('badge-danger');
+                }
+
+                // Fetch bookings
+                const bookings = await fetchAPI('/bookings/');
+                const myBookings = bookings.filter(b => b.driver_name.toLowerCase() === user.name.toLowerCase());
+
+                const totalAssigned = myBookings.length;
+                const completedTrips = myBookings.filter(b => b.ride_status === 'Completed');
+                
+                // Earnings calculation
+                let totalEarnings = 0;
+                const earningsList = document.getElementById('earnings-list');
+                
+                if (completedTrips.length === 0) {
+                    earningsList.innerHTML = `
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-muted);">No completed rides to report earnings.</td>
+                        </tr>
+                    `;
+                } else {
+                    earningsList.innerHTML = '';
+                    completedTrips.reverse().forEach(trip => {
+                        totalEarnings += parseFloat(trip.fare);
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>#${trip.booking_id}</strong></td>
+                            <td>${trip.customer_name}</td>
+                            <td>${trip.booking_date}</td>
+                            <td style="color: var(--success); font-weight: 600;">₹${parseFloat(trip.fare).toFixed(2)}</td>
+                        `;
+                        earningsList.appendChild(tr);
+                    });
+                }
+
+                document.getElementById('assigned-rides-val').textContent = totalAssigned;
+                document.getElementById('completed-trips-val').textContent = completedTrips.length;
+                document.getElementById('earnings-val').textContent = `₹${totalEarnings.toFixed(2)}`;
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadDriverDashboard);
+    </script>
+</body>
+</html>

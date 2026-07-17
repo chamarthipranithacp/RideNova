@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - RideNova</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <div class="logo-container">
+                <svg class="moving-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1 .4-1 1v3H3c-.6 0-1 .4-1 1v2c0 .6.4 1 1 1h2"/>
+                    <circle cx="7" cy="17" r="2"/>
+                    <circle cx="17" cy="17" r="2"/>
+                </svg>
+                <a href="index.html" class="logo">Ride<span>Nova</span></a>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <!-- Dynamically populated by script.js -->
+            </ul>
+        </div>
+    </header>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <h3 style="margin-left: 1rem; margin-top: 1rem; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px;">Collections</h3>
+            <a href="#" class="sidebar-link active" onclick="showTab('customers')">👥 Customers</a>
+            <a href="#" class="sidebar-link" onclick="showTab('drivers')">🚗 Drivers</a>
+            <a href="#" class="sidebar-link" onclick="showTab('vehicles')">🚘 Vehicles</a>
+            <a href="#" class="sidebar-link" onclick="showTab('bookings')">📅 Bookings</a>
+            <a href="#" class="sidebar-link" onclick="showTab('payments')">💳 Payments</a>
+            <a href="#" class="sidebar-link" onclick="showTab('admins')">🛡️ Admins</a>
+        </aside>
+
+        <!-- Main Display Content Area -->
+        <main>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+                <div>
+                    <h2 id="collection-title" style="margin-bottom: 0;">Manage Customers</h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem;" id="collection-desc">View, edit and manage customers accounts.</p>
+                </div>
+                <div>
+                    <button class="btn btn-success" style="width: auto; font-size: 0.9rem;" onclick="openModal('add')">➕ Add New Record</button>
+                </div>
+            </div>
+
+            <!-- Search / Filter bar -->
+            <div class="card" style="padding: 1rem; margin-bottom: 1.5rem; background: rgba(255, 255, 255, 0.02); border-color: rgba(255, 255, 255, 0.04);">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <input type="text" class="form-control" id="search-input" placeholder="Search by name, email, or identifiers..." oninput="filterData()">
+                </div>
+            </div>
+
+            <!-- Data Table Card -->
+            <div class="card" style="padding: 0;">
+                <div class="table-container">
+                    <table id="admin-data-table">
+                        <thead id="table-head">
+                            <!-- Headers dynamically updated -->
+                        </thead>
+                        <tbody id="table-body">
+                            <tr>
+                                <td style="text-align: center; color: var(--text-muted); padding: 3rem;">Loading collection records...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Form Dialog (Adds/Edits records dynamically) -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-title-row">
+                <h3 id="modal-title" style="margin-bottom: 0;">Add Customer</h3>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="modal-form">
+                <!-- Inputs generated dynamically depending on collection active -->
+                <div id="dynamic-form-fields"></div>
+                <button type="submit" class="btn" style="margin-top: 1.5rem;" id="modal-submit-btn">Save Record</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Redirect if not admin
+        const adminUser = getSessionUser();
+        if (!adminUser || adminUser.role !== 'admin') {
+            showNotification('Admin login required.', 'error');
+            setTimeout(() => { window.location.href = 'login.html'; }, 1000);
+        }
+
+        let currentTab = 'customers';
+        let records = [];
+        let editingId = null;
+
+        const tableHeaders = {
+            customers: ['Customer ID', 'Full Name', 'Email', 'Phone', 'Address', 'Actions'],
+            drivers: ['Driver ID', 'Name', 'Email', 'Phone', 'License', 'Experience', 'Availability', 'Actions'],
+            vehicles: ['Vehicle ID', 'Driver Name', 'Type', 'Number', 'Seating', 'Model', 'Actions'],
+            bookings: ['Booking ID', 'Customer', 'Driver', 'Pickup', 'Dropoff', 'Date', 'Fare', 'Status', 'Actions'],
+            payments: ['Payment ID', 'Booking ID', 'Customer', 'Amount', 'Method', 'Txn ID', 'Status', 'Date', 'Actions'],
+            admins: ['Admin ID', 'Full Name', 'Username / Email', 'Phone', 'Actions']
+        };
+
+        const formFieldsConfig = {
+            customers: [
+                { id: 'full_name', label: 'Full Name', type: 'text', placeholder: 'Rahul Sharma', required: true },
+                { id: 'email', label: 'Email Address', type: 'email', placeholder: 'rahul@gmail.com', required: true },
+                { id: 'phone', label: 'Phone Number', type: 'tel', placeholder: '9876543210', required: true },
+                { id: 'address', label: 'Address', type: 'text', placeholder: 'Hyderabad', required: true },
+                { id: 'password', label: 'Password', type: 'password', placeholder: '••••••••', required: true }
+            ],
+            drivers: [
+                { id: 'driver_name', label: 'Driver Name', type: 'text', placeholder: 'Ramesh Kumar', required: true },
+                { id: 'email', label: 'Email Address', type: 'email', placeholder: 'ramesh@gmail.com', required: true },
+                { id: 'phone', label: 'Phone Number', type: 'tel', placeholder: '9988776655', required: true },
+                { id: 'license_number', label: 'License Number', type: 'text', placeholder: 'DL123456789', required: true },
+                { id: 'experience', label: 'Experience (Years)', type: 'number', placeholder: '5', required: true, min: 0 },
+                { id: 'availability', label: 'Availability', type: 'select', options: ['Available', 'Busy', 'Offline'], required: true }
+            ],
+            vehicles: [
+                { id: 'driver_name', label: 'Driver Name', type: 'text', placeholder: 'Ramesh Kumar', required: true },
+                { id: 'vehicle_type', label: 'Vehicle Type', type: 'select', options: ['Sedan', 'Hatchback', 'SUV', 'Auto', 'Bike', 'Luxury'], required: true },
+                { id: 'vehicle_number', label: 'Vehicle License Plate', type: 'text', placeholder: 'TS09AB1234', required: true },
+                { id: 'seating_capacity', label: 'Seating Capacity', type: 'number', placeholder: '4', required: true, min: 1 },
+                { id: 'model', label: 'Model', type: 'text', placeholder: 'Hyundai Verna', required: true }
+            ],
+            bookings: [
+                { id: 'customer_name', label: 'Customer Name', type: 'text', placeholder: 'Rahul Sharma', required: true },
+                { id: 'driver_name', label: 'Driver Name', type: 'text', placeholder: 'Ramesh Kumar', required: true },
+                { id: 'pickup_location', label: 'Pickup Location', type: 'text', placeholder: 'Madhapur', required: true },
+                { id: 'drop_location', label: 'Drop Location', type: 'text', placeholder: 'Gachibowli', required: true },
+                { id: 'booking_date', label: 'Booking Date', type: 'date', required: true },
+                { id: 'fare', label: 'Fare (₹)', type: 'number', placeholder: '350', required: true, step: 'any' },
+                { id: 'ride_status', label: 'Ride Status', type: 'select', options: ['Requested', 'Accepted', 'In Progress', 'Completed', 'Cancelled'], required: true }
+            ],
+            payments: [
+                { id: 'booking_id', label: 'Booking ID', type: 'number', placeholder: '401', required: true },
+                { id: 'customer_name', label: 'Customer Name', type: 'text', placeholder: 'Rahul Sharma', required: true },
+                { id: 'amount', label: 'Amount (₹)', type: 'number', placeholder: '350', required: true, step: 'any' },
+                { id: 'payment_method', label: 'Payment Method', type: 'select', options: ['UPI', 'Credit Card', 'Debit Card', 'Wallet', 'Cash'], required: true },
+                { id: 'payment_status', label: 'Payment Status', type: 'select', options: ['Success', 'Pending', 'Failed'], required: true },
+                { id: 'transaction_id', label: 'Transaction ID', type: 'text', placeholder: 'TXN456789123', required: true },
+                { id: 'payment_date', label: 'Payment Date', type: 'date', required: true }
+            ],
+            admins: [
+                { id: 'full_name', label: 'Full Name', type: 'text', placeholder: 'Admin Name', required: true },
+                { id: 'email', label: 'Username / Email', type: 'text', placeholder: 'admin2', required: true },
+                { id: 'phone', label: 'Phone Number', type: 'tel', placeholder: '9998887776', required: true },
+                { id: 'password', label: 'Password', type: 'password', placeholder: '••••••••', required: true }
+            ]
+        };
+
+        function showTab(tabName) {
+            currentTab = tabName;
+            
+            // Set active class in sidebar links
+            const links = document.querySelectorAll('.sidebar-link');
+            links.forEach(l => {
+                if (l.textContent.toLowerCase().includes(tabName)) {
+                    l.classList.add('active');
+                } else {
+                    l.classList.remove('active');
+                }
+            });
+
+            // Set Title & Description
+            document.getElementById('collection-title').textContent = `Manage ${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`;
+            document.getElementById('collection-desc').textContent = `View, edit and manage registered ${tabName} in real-time.`;
+
+            // Reset search input
+            document.getElementById('search-input').value = '';
+
+            loadTableData();
+        }
+
+        async function loadTableData() {
+            const tableHead = document.getElementById('table-head');
+            const tableBody = document.getElementById('table-body');
+            
+            // 1. Draw Headers
+            let headerHTML = '<tr>';
+            tableHeaders[currentTab].forEach(h => {
+                headerHTML += `<th>${h}</th>`;
+            });
+            headerHTML += '</tr>';
+            tableHead.innerHTML = headerHTML;
+
+            tableBody.innerHTML = `<tr><td colspan="${tableHeaders[currentTab].length}" style="text-align: center; color: var(--text-muted); padding: 3rem;">Loading records...</td></tr>`;
+
+            try {
+                // 2. Fetch Data from API
+                const endpoint = `/${currentTab}/`;
+                records = await fetchAPI(endpoint);
+                
+                // 3. Render Data rows
+                renderDataRows(records);
+
+            } catch (err) {
+                tableBody.innerHTML = `<tr><td colspan="${tableHeaders[currentTab].length}" style="text-align: center; color: var(--danger); padding: 3rem;">Failed to load data.</td></tr>`;
+            }
+        }
+
+        function renderDataRows(dataList) {
+            const tableBody = document.getElementById('table-body');
+            if (dataList.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="${tableHeaders[currentTab].length}" style="text-align: center; color: var(--text-muted); padding: 2rem;">No records found.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = '';
+            dataList.forEach(row => {
+                const tr = document.createElement('tr');
+                let rowId = null;
+
+                if (currentTab === 'customers') {
+                    rowId = row.customer_id;
+                    tr.innerHTML = `
+                        <td><strong>#${row.customer_id}</strong></td>
+                        <td>${row.full_name}</td>
+                        <td>${row.email}</td>
+                        <td>${row.phone}</td>
+                        <td>${row.address}</td>
+                    `;
+                } else if (currentTab === 'drivers') {
+                    rowId = row.driver_id;
+                    let availBadge = 'badge-success';
+                    if (row.availability === 'Busy') availBadge = 'badge-warning';
+                    if (row.availability === 'Offline') availBadge = 'badge-danger';
+                    tr.innerHTML = `
+                        <td><strong>#${row.driver_id}</strong></td>
+                        <td>${row.driver_name}</td>
+                        <td>${row.email}</td>
+                        <td>${row.phone}</td>
+                        <td><code>${row.license_number}</code></td>
+                        <td>${row.experience} yrs</td>
+                        <td><span class="badge ${availBadge}">${row.availability}</span></td>
+                    `;
+                } else if (currentTab === 'vehicles') {
+                    rowId = row.vehicle_id;
+                    tr.innerHTML = `
+                        <td><strong>#${row.vehicle_id}</strong></td>
+                        <td>${row.driver_name}</td>
+                        <td>${row.vehicle_type}</td>
+                        <td><code>${row.vehicle_number}</code></td>
+                        <td>${row.seating_capacity} seats</td>
+                        <td>${row.model}</td>
+                    `;
+                } else if (currentTab === 'bookings') {
+                    rowId = row.booking_id;
+                    let statusBadge = 'badge-info';
+                    if (row.ride_status === 'Completed') statusBadge = 'badge-success';
+                    if (row.ride_status === 'Cancelled') statusBadge = 'badge-danger';
+                    if (row.ride_status === 'Accepted' || row.ride_status === 'In Progress') statusBadge = 'badge-warning';
+                    tr.innerHTML = `
+                        <td><strong>#${row.booking_id}</strong></td>
+                        <td>${row.customer_name}</td>
+                        <td>${row.driver_name}</td>
+                        <td>${row.pickup_location}</td>
+                        <td>${row.drop_location}</td>
+                        <td>${row.booking_date}</td>
+                        <td>₹${parseFloat(row.fare).toFixed(2)}</td>
+                        <td><span class="badge ${statusBadge}">${row.ride_status}</span></td>
+                    `;
+                } else if (currentTab === 'payments') {
+                    rowId = row.payment_id;
+                    let pBadge = 'badge-success';
+                    if (row.payment_status === 'Pending') pBadge = 'badge-warning';
+                    if (row.payment_status === 'Failed') pBadge = 'badge-danger';
+                    tr.innerHTML = `
+                        <td><strong>#${row.payment_id}</strong></td>
+                        <td>#${row.booking_id}</td>
+                        <td>${row.customer_name}</td>
+                        <td><strong>₹${parseFloat(row.amount).toFixed(2)}</strong></td>
+                        <td>${row.payment_method}</td>
+                        <td><code>${row.transaction_id}</code></td>
+                        <td><span class="badge ${pBadge}">${row.payment_status}</span></td>
+                        <td>${row.payment_date}</td>
+                    `;
+                } else if (currentTab === 'admins') {
+                    rowId = row.admin_id;
+                    tr.innerHTML = `
+                        <td><strong>#${row.admin_id}</strong></td>
+                        <td>${row.full_name}</td>
+                        <td>${row.email}</td>
+                        <td>${row.phone}</td>
+                    `;
+                }
+
+                // Add action buttons cell
+                const actionCell = document.createElement('td');
+                actionCell.innerHTML = `
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; width: auto;" onclick="openModal('edit', ${rowId})">Edit</button>
+                        <button class="btn btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.8rem; width: auto;" onclick="deleteRecord(${rowId})">Delete</button>
+                    </div>
+                `;
+                tr.appendChild(actionCell);
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function filterData() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = records.filter(row => {
+                return Object.values(row).some(val => 
+                    String(val).toLowerCase().includes(query)
+                );
+            });
+            renderDataRows(filtered);
+        }
+
+        // --- CRUD Modals Code ---
+
+        function openModal(mode, id = null) {
+            const overlay = document.getElementById('modal-overlay');
+            const title = document.getElementById('modal-title');
+            const submitBtn = document.getElementById('modal-submit-btn');
+            const fieldsContainer = document.getElementById('dynamic-form-fields');
+            
+            editingId = id;
+            overlay.classList.add('active');
+
+            // Draw fields
+            let fieldsHTML = '';
+            const fields = formFieldsConfig[currentTab];
+            
+            const currentRecord = id ? records.find(r => {
+                if (currentTab === 'customers') return r.customer_id === id;
+                if (currentTab === 'drivers') return r.driver_id === id;
+                if (currentTab === 'vehicles') return r.vehicle_id === id;
+                if (currentTab === 'bookings') return r.booking_id === id;
+                if (currentTab === 'payments') return r.payment_id === id;
+                if (currentTab === 'admins') return r.admin_id === id;
+            }) : null;
+
+            title.textContent = mode === 'add' 
+                ? `Add ${currentTab.slice(0, -1).toUpperCase()}` 
+                : `Edit ${currentTab.slice(0, -1).toUpperCase()} #${id}`;
+            submitBtn.textContent = mode === 'add' ? 'Create Record' : 'Save Changes';
+
+            fields.forEach(field => {
+                const val = currentRecord ? currentRecord[field.id] : '';
+                fieldsHTML += `<div class="form-group">`;
+                fieldsHTML += `<label for="f-${field.id}">${field.label}</label>`;
+
+                if (field.type === 'select') {
+                    fieldsHTML += `<select class="form-control" id="f-${field.id}" ${field.required ? 'required' : ''}>`;
+                    field.options.forEach(opt => {
+                        const selected = opt === val ? 'selected' : '';
+                        fieldsHTML += `<option value="${opt}" ${selected}>${opt}</option>`;
+                    });
+                    fieldsHTML += `</select>`;
+                } else {
+                    fieldsHTML += `
+                        <input type="${field.type}" class="form-control" id="f-${field.id}" 
+                            placeholder="${field.placeholder || ''}" 
+                            value="${val}" 
+                            ${field.required ? 'required' : ''}
+                            ${field.min !== undefined ? `min="${field.min}"` : ''}
+                            ${field.step ? `step="${field.step}"` : ''}
+                        >
+                    `;
+                }
+                fieldsHTML += `</div>`;
+            });
+
+            fieldsContainer.innerHTML = fieldsHTML;
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.remove('active');
+            editingId = null;
+        }
+
+        // Handle Add/Edit submit
+        document.getElementById('modal-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fields = formFieldsConfig[currentTab];
+            const payload = {};
+
+            fields.forEach(field => {
+                const input = document.getElementById(`f-${field.id}`);
+                let value = input.value;
+                if (field.type === 'number') {
+                    value = value.includes('.') ? parseFloat(value) : parseInt(value);
+                }
+                payload[field.id] = value;
+            });
+
+            try {
+                let res;
+                if (editingId) {
+                    // Update PUT
+                    const endpoint = `/${currentTab}/update/${editingId}/`;
+                    res = await fetchAPI(endpoint, 'PUT', payload);
+                    if (res) {
+                        showNotification('Record updated successfully!');
+                    }
+                } else {
+                    // Add POST
+                    const endpoint = `/${currentTab}/add/`;
+                    res = await fetchAPI(endpoint, 'POST', payload);
+                    if (res) {
+                        showNotification('Record created successfully!');
+                    }
+                }
+                closeModal();
+                loadTableData();
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        async function deleteRecord(id) {
+            const confirmed = confirm(`Are you sure you want to delete ${currentTab.slice(0, -1)} #${id}? This action is permanent.`);
+            if (!confirmed) return;
+
+            try {
+                const endpoint = `/${currentTab}/delete/${id}/`;
+                const res = await fetchAPI(endpoint, 'DELETE');
+                if (res) {
+                    showNotification('Record deleted successfully.');
+                    loadTableData();
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // Initial tab load
+        document.addEventListener('DOMContentLoaded', () => {
+            showTab('customers');
+        });
+    </script>
+</body>
+</html>

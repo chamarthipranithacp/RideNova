@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Ride - RideNova</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <div class="logo-container">
+                <svg class="moving-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1 .4-1 1v3H3c-.6 0-1 .4-1 1v2c0 .6.4 1 1 1h2"/>
+                    <circle cx="7" cy="17" r="2"/>
+                    <circle cx="17" cy="17" r="2"/>
+                </svg>
+                <a href="index.html" class="logo">Ride<span>Nova</span></a>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <!-- Dynamically populated by script.js -->
+            </ul>
+        </div>
+    </header>
+
+    <div class="container" style="max-width: 600px;">
+        <div class="card">
+            <h2>Book Your Journey</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem;">Fill in the pickup details to find a nearby driver.</p>
+
+            <form id="booking-form">
+                <div class="form-group">
+                    <label for="pickup">Pickup Location</label>
+                    <input type="text" class="form-control" id="pickup" placeholder="Enter pickup address (e.g. Tirupati Central)" required oninput="calculateEstimate()">
+                </div>
+
+                <div class="form-group">
+                    <label for="dropoff">Drop Location</label>
+                    <input type="text" class="form-control" id="dropoff" placeholder="Enter destination address (e.g. Tirumala Temple)" required oninput="calculateEstimate()">
+                </div>
+
+                <div class="form-group">
+                    <label for="vehicle_type">Vehicle Category</label>
+                    <select class="form-control" id="vehicle_type" required onchange="calculateEstimate()">
+                        <option value="Sedan">Sedan (4 Seater, Premium)</option>
+                        <option value="Hatchback">Hatchback (4 Seater, Compact)</option>
+                        <option value="SUV">SUV (6 Seater, Spacious)</option>
+                        <option value="Auto">Auto (3 Seater, Budget)</option>
+                        <option value="Bike">Bike (1 Rider, Fast)</option>
+                        <option value="Luxury">Luxury (4 Seater, Ultra-Premium)</option>
+                    </select>
+                </div>
+
+                <!-- Fare Estimate Box -->
+                <div class="card" style="background: rgba(255, 255, 255, 0.02); padding: 1rem; border-color: rgba(255, 255, 255, 0.05); margin-bottom: 1.5rem; text-align: center;">
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">Estimated Fare</div>
+                    <div id="fare-value" style="font-size: 2.2rem; font-weight: 700; color: var(--accent); margin: 0.25rem 0;">₹0.00</div>
+                    <div id="distance-value" style="font-size: 0.8rem; color: var(--text-muted);">Fill details to get estimate</div>
+                </div>
+
+                <button type="submit" class="btn">Confirm Booking</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        // Redirect if not logged in
+        const user = getSessionUser();
+        if (!user || user.role !== 'customer') {
+            showNotification('Please log in as a customer to book a ride.', 'error');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+
+        let calculatedFare = 0;
+
+        function calculateEstimate() {
+            const pickup = document.getElementById('pickup').value.trim();
+            const dropoff = document.getElementById('dropoff').value.trim();
+            const vehicleType = document.getElementById('vehicle_type').value;
+
+            if (!pickup || !dropoff) {
+                document.getElementById('fare-value').textContent = '₹0.00';
+                document.getElementById('distance-value').textContent = 'Fill details to get estimate';
+                calculatedFare = 0;
+                return;
+            }
+
+            // Simulated distance based on length of input text
+            const distance = Math.max(2.4, (pickup.length + dropoff.length) * 0.4);
+            
+            let ratePerKm = 10;
+            let baseFare = 40;
+
+            switch(vehicleType) {
+                case 'Hatchback': baseFare = 30; ratePerKm = 8; break;
+                case 'Sedan': baseFare = 45; ratePerKm = 11; break;
+                case 'SUV': baseFare = 70; ratePerKm = 16; break;
+                case 'Auto': baseFare = 20; ratePerKm = 6; break;
+                case 'Bike': baseFare = 15; ratePerKm = 4; break;
+                case 'Luxury': baseFare = 150; ratePerKm = 30; break;
+            }
+
+            calculatedFare = Math.round(baseFare + (distance * ratePerKm));
+            document.getElementById('fare-value').textContent = `₹${calculatedFare.toFixed(2)}`;
+            document.getElementById('distance-value').textContent = `Simulated Distance: ${distance.toFixed(1)} km`;
+        }
+
+        document.getElementById('booking-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!user) return;
+
+            const pickup = document.getElementById('pickup').value.trim();
+            const dropoff = document.getElementById('dropoff').value.trim();
+            const vehicleType = document.getElementById('vehicle_type').value;
+
+            // Fetch available drivers to assign
+            let assignedDriver = 'Ramesh Kumar'; // Fallback
+            try {
+                const drivers = await fetchAPI('/drivers/');
+                const availableDrivers = drivers.filter(d => d.availability === 'Available');
+                if (availableDrivers.length > 0) {
+                    // Match a driver who has vehicle_type if possible, or just grab the first available
+                    const vehicles = await fetchAPI('/vehicles/');
+                    const matchedDriver = availableDrivers.find(d => {
+                        const v = vehicles.find(veh => veh.driver_name === d.driver_name);
+                        return v && v.vehicle_type === vehicleType;
+                    });
+                    assignedDriver = matchedDriver ? matchedDriver.driver_name : availableDrivers[0].driver_name;
+                }
+            } catch (err) {
+                console.warn("Could not match driver, using default driver", err);
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+
+            const bookingPayload = {
+                customer_name: user.name,
+                driver_name: assignedDriver,
+                pickup_location: pickup,
+                drop_location: dropoff,
+                booking_date: today,
+                fare: calculatedFare,
+                ride_status: 'Requested'
+            };
+
+            try {
+                const booking = await fetchAPI('/bookings/add/', 'POST', bookingPayload);
+                if (booking && booking.booking_id) {
+                    showNotification('Booking successfully created!');
+                    
+                    // Automatically navigate customer to payment page
+                    setTimeout(() => {
+                        window.location.href = `payments.html?booking_id=${booking.booking_id}`;
+                    }, 1500);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+</html>

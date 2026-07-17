@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ride History - RideNova</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <div class="logo-container">
+                <svg class="moving-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1 .4-1 1v3H3c-.6 0-1 .4-1 1v2c0 .6.4 1 1 1h2"/>
+                    <circle cx="7" cy="17" r="2"/>
+                    <circle cx="17" cy="17" r="2"/>
+                </svg>
+                <a href="index.html" class="logo">Ride<span>Nova</span></a>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <!-- Dynamically populated by script.js -->
+            </ul>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2>Your Ride History</h2>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">Overview of all your previous and active journeys with GoTaxi.</p>
+
+        <div class="card">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Booking ID</th>
+                            <th>Driver</th>
+                            <th>Pickup Location</th>
+                            <th>Drop Location</th>
+                            <th>Booking Date</th>
+                            <th>Fare Amount</th>
+                            <th>Ride Status</th>
+                            <th>Payment Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-trips-list">
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: var(--text-muted);">Fetching your rides...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        const user = getSessionUser();
+        if (!user || user.role !== 'customer') {
+            showNotification('Please log in as a customer to view ride history.', 'error');
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1000);
+        }
+
+        async function loadRideHistory() {
+            if (!user) return;
+
+            try {
+                // Fetch bookings and payments
+                const bookings = await fetchAPI('/bookings/');
+                const payments = await fetchAPI('/payments/');
+
+                // Filter bookings by logged-in customer's name
+                const myBookings = bookings.filter(b => b.customer_name.toLowerCase() === user.name.toLowerCase());
+                
+                const list = document.getElementById('history-trips-list');
+                if (myBookings.length === 0) {
+                    list.innerHTML = `
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+                                You haven't booked any rides yet! <br>
+                                <a href="booking.html" class="btn" style="width: auto; margin-top: 1rem; display: inline-flex;">Book Your First Ride</a>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                list.innerHTML = '';
+                
+                // Show most recent bookings first
+                myBookings.reverse().forEach(booking => {
+                    // Check if payment exists
+                    const paidRecord = payments.find(p => p.booking_id === booking.booking_id && p.payment_status === 'Success');
+                    
+                    let statusBadgeClass = 'badge-info';
+                    if (booking.ride_status === 'Completed') statusBadgeClass = 'badge-success';
+                    if (booking.ride_status === 'Cancelled') statusBadgeClass = 'badge-danger';
+                    if (booking.ride_status === 'Accepted' || booking.ride_status === 'In Progress') statusBadgeClass = 'badge-warning';
+
+                    const paymentBadge = paidRecord 
+                        ? `<span class="badge badge-success">Paid</span>` 
+                        : `<span class="badge badge-danger">Unpaid</span>`;
+
+                    let actionCol = '-';
+                    if (!paidRecord && booking.ride_status !== 'Cancelled') {
+                        actionCol = `<a href="payments.html?booking_id=${booking.booking_id}" class="btn" style="padding: 0.25rem 0.6rem; font-size: 0.8rem; width: auto; background: var(--accent);">Pay Now</a>`;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td><strong>#${booking.booking_id}</strong></td>
+                        <td>${booking.driver_name}</td>
+                        <td>${booking.pickup_location}</td>
+                        <td>${booking.drop_location}</td>
+                        <td>${booking.booking_date}</td>
+                        <td>₹${parseFloat(booking.fare).toFixed(2)}</td>
+                        <td><span class="badge ${statusBadgeClass}">${booking.ride_status}</span></td>
+                        <td>${paymentBadge}</td>
+                        <td>${actionCol}</td>
+                    `;
+                    list.appendChild(tr);
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', loadRideHistory);
+    </script>
+</body>
+</html>

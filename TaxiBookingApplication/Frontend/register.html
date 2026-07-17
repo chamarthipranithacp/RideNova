@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - RideNova</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="nav-container">
+            <div class="logo-container">
+                <svg class="moving-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1 .4-1 1v3H3c-.6 0-1 .4-1 1v2c0 .6.4 1 1 1h2"/>
+                    <circle cx="7" cy="17" r="2"/>
+                    <circle cx="17" cy="17" r="2"/>
+                </svg>
+                <a href="index.html" class="logo">Ride<span>Nova</span></a>
+            </div>
+            <ul class="nav-links" id="nav-links">
+                <!-- Dynamically populated by script.js -->
+            </ul>
+        </div>
+    </header>
+
+    <!-- Register Form Section -->
+    <div class="form-container-page" style="min-height: calc(100vh - 80px);">
+        <div class="card form-card">
+            <h2 style="text-align: center; margin-bottom: 0.5rem;">Create Account</h2>
+            <p style="color: var(--text-muted); text-align: center; margin-bottom: 2rem; font-size: 0.9rem;">Sign up to start booking or driving</p>
+
+            <div class="tab-header">
+                <button class="tab-btn active" id="tab-customer" onclick="switchTab('customer')">Customer</button>
+                <button class="tab-btn" id="tab-driver" onclick="switchTab('driver')">Driver Partner</button>
+                <button class="tab-btn" id="tab-admin" onclick="switchTab('admin')">Administrator</button>
+            </div>
+
+            <!-- Customer Registration Form -->
+            <form id="customer-form">
+                <div class="form-group">
+                    <label for="c-fullname">Full Name</label>
+                    <input type="text" class="form-control" id="c-fullname" placeholder="Rahul Sharma" required>
+                </div>
+                <div class="form-group">
+                    <label for="c-email">Email Address</label>
+                    <input type="email" class="form-control" id="c-email" placeholder="rahul@gmail.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="c-phone">Phone Number</label>
+                    <input type="tel" class="form-control" id="c-phone" placeholder="9876543210" required>
+                </div>
+                <div class="form-group">
+                    <label for="c-address">Address</label>
+                    <input type="text" class="form-control" id="c-address" placeholder="Hyderabad" required>
+                </div>
+                <div class="form-group">
+                    <label for="c-password">Password</label>
+                    <input type="password" class="form-control" id="c-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" style="margin-top: 1rem;">Register as Customer</button>
+            </form>
+
+            <!-- Driver Registration Form -->
+            <form id="driver-form" style="display: none;">
+                <div class="form-group">
+                    <label for="d-fullname">Full Name</label>
+                    <input type="text" class="form-control" id="d-fullname" placeholder="Ramesh Kumar" required>
+                </div>
+                <div class="form-group">
+                    <label for="d-email">Email Address</label>
+                    <input type="email" class="form-control" id="d-email" placeholder="ramesh@gmail.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="d-phone">Phone Number</label>
+                    <input type="tel" class="form-control" id="d-phone" placeholder="9988776655" required>
+                </div>
+                <div class="form-group">
+                    <label for="d-license">Driving License Number</label>
+                    <input type="text" class="form-control" id="d-license" placeholder="DL123456789" required>
+                </div>
+                <div class="form-group">
+                    <label for="d-experience">Years of Experience</label>
+                    <input type="number" class="form-control" id="d-experience" min="0" placeholder="5" required>
+                </div>
+                <button type="submit" class="btn btn-success" style="margin-top: 1rem;">Register as Driver</button>
+            </form>
+
+            <!-- Admin Registration Form -->
+            <form id="admin-form" style="display: none;">
+                <div class="form-group">
+                    <label for="a-fullname">Full Name</label>
+                    <input type="text" class="form-control" id="a-fullname" placeholder="Admin Name" required>
+                </div>
+                <div class="form-group">
+                    <label for="a-email">Admin Username / Email</label>
+                    <input type="text" class="form-control" id="a-email" placeholder="admin2" required>
+                </div>
+                <div class="form-group">
+                    <label for="a-phone">Phone Number</label>
+                    <input type="tel" class="form-control" id="a-phone" placeholder="9998887776" required>
+                </div>
+                <div class="form-group">
+                    <label for="a-password">Password</label>
+                    <input type="password" class="form-control" id="a-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn" style="margin-top: 1rem; background: var(--accent);">Register as Admin</button>
+            </form>
+
+            <p style="text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted);">
+                Already have an account? <a href="login.html" style="color: var(--primary); text-decoration: none; font-weight: 600;">Sign In</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        let currentRole = 'customer';
+
+        function switchTab(role) {
+            currentRole = role;
+            const tabCustomer = document.getElementById('tab-customer');
+            const tabDriver = document.getElementById('tab-driver');
+            const tabAdmin = document.getElementById('tab-admin');
+            const formCustomer = document.getElementById('customer-form');
+            const formDriver = document.getElementById('driver-form');
+            const formAdmin = document.getElementById('admin-form');
+
+            tabCustomer.classList.remove('active');
+            tabDriver.classList.remove('active');
+            tabAdmin.classList.remove('active');
+            formCustomer.style.display = 'none';
+            formDriver.style.display = 'none';
+            formAdmin.style.display = 'none';
+
+            if (role === 'customer') {
+                tabCustomer.classList.add('active');
+                formCustomer.style.display = 'block';
+            } else if (role === 'driver') {
+                tabDriver.classList.add('active');
+                formDriver.style.display = 'block';
+            } else if (role === 'admin') {
+                tabAdmin.classList.add('active');
+                formAdmin.style.display = 'block';
+            }
+        }
+
+        // Handle Customer Submit
+        document.getElementById('customer-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const full_name = document.getElementById('c-fullname').value.trim();
+            const email = document.getElementById('c-email').value.trim();
+            const phone = document.getElementById('c-phone').value.trim();
+            const address = document.getElementById('c-address').value.trim();
+            const password = document.getElementById('c-password').value.trim();
+
+            const payload = { full_name, email, phone, address, password };
+
+            try {
+                const res = await fetchAPI('/customers/add/', 'POST', payload);
+                if (res && res.customer_id) {
+                    showNotification('Registration successful! Redirecting to login...');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        // Handle Driver Submit
+        document.getElementById('driver-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const driver_name = document.getElementById('d-fullname').value.trim();
+            const email = document.getElementById('d-email').value.trim();
+            const phone = document.getElementById('d-phone').value.trim();
+            const license_number = document.getElementById('d-license').value.trim();
+            const experience = document.getElementById('d-experience').value.trim();
+            const availability = 'Available';
+
+            const payload = { driver_name, email, phone, license_number, experience, availability };
+
+            try {
+                const res = await fetchAPI('/drivers/add/', 'POST', payload);
+                if (res && res.driver_id) {
+                    showNotification('Driver Registration successful! Sign in with your phone as credential.');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+
+        // Handle Admin Submit
+        document.getElementById('admin-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const full_name = document.getElementById('a-fullname').value.trim();
+            const email = document.getElementById('a-email').value.trim();
+            const phone = document.getElementById('a-phone').value.trim();
+            const password = document.getElementById('a-password').value.trim();
+
+            const payload = { full_name, email, phone, password };
+
+            try {
+                const res = await fetchAPI('/admins/add/', 'POST', payload);
+                if (res && res.admin_id) {
+                    showNotification('Admin Registration successful! Redirecting to login...');
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 1500);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        });
+    </script>
+</body>
+</html>
